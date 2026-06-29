@@ -1,0 +1,40 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum JobStatus {
+  NEW
+  RECOMMENDED
+  IGNORED
+  APPLIED
+}
+
+model Job {
+  id            String    @id
+  title         String
+  company       String
+  location      String
+  salary        String?
+  url           String
+  detailsUrl    String?
+  provider      String
+
+  status        JobStatus @default(NEW)
+  score         Int?
+  summary       String?
+  reason        String?
+  missingSkills String[]
+
+  postedAt      DateTime
+  syncedAt      DateTime  @default(now()) @updatedAt
+  analyzedAt    DateTime?
+  appliedAt     DateTime?
+
+  @@index([status])
+  @@index([postedAt])
+}

@@ -1,0 +1,26 @@
+{
+  "name": "job-evaluator",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate"
+  },
+  "dependencies": {
+    "@fastify/cors": "^9",
+    "@prisma/client": "^6",
+    "dotenv": "^16",
+    "fastify": "^4",
+    "node-cron": "^3"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/node-cron": "^3",
+    "prisma": "^6",
+    "tsx": "^4",
+    "typescript": "^5"
+  }
+}
