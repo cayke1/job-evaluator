@@ -6,6 +6,19 @@ import { z } from "zod";
 const BASE_URL = process.env.JOB_EVALUATOR_URL;
 if (!BASE_URL) throw new Error("JOB_EVALUATOR_URL env var is required");
 
+async function apiFetch(url: string, init?: RequestInit): Promise<unknown> {
+  const res = await fetch(url, init);
+  const text = await res.text();
+  if (!text) {
+    throw new Error(`Empty response from ${url} (HTTP ${res.status})`);
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Non-JSON response from ${url} (HTTP ${res.status}): ${text.slice(0, 200)}`);
+  }
+}
+
 function buildMcpServer(): McpServer {
   const mcp = new McpServer({ name: "job-evaluator", version: "1.0.0" });
 
@@ -22,8 +35,7 @@ function buildMcpServer(): McpServer {
       if (status) params.set("status", status);
       if (page) params.set("page", String(page));
       if (limit) params.set("limit", String(limit));
-      const res = await fetch(`${BASE_URL}/jobs?${params}`);
-      const data = await res.json();
+      const data = await apiFetch(`${BASE_URL}/jobs?${params}`);
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
     }
   );
@@ -40,12 +52,11 @@ function buildMcpServer(): McpServer {
       missingSkills: z.array(z.string()).optional(),
     },
     async ({ id, ...body }) => {
-      const res = await fetch(`${BASE_URL}/jobs/${id}`, {
+      const data = await apiFetch(`${BASE_URL}/jobs/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
     }
   );
@@ -57,8 +68,7 @@ function buildMcpServer(): McpServer {
       id: z.string().describe("Job ID"),
     },
     async ({ id }) => {
-      const res = await fetch(`${BASE_URL}/jobs/${id}/apply`, { method: "POST" });
-      const data = await res.json();
+      const data = await apiFetch(`${BASE_URL}/jobs/${id}/apply`, { method: "POST" });
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
     }
   );
@@ -68,8 +78,7 @@ function buildMcpServer(): McpServer {
     "Trigger a manual sync of job listings from the VagasPraJR external API. Returns counts of created, updated, and skipped jobs.",
     {},
     async () => {
-      const res = await fetch(`${BASE_URL}/sync`, { method: "POST" });
-      const data = await res.json();
+      const data = await apiFetch(`${BASE_URL}/sync`, { method: "POST" });
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
     }
   );
@@ -79,8 +88,7 @@ function buildMcpServer(): McpServer {
     "Check the health of the job-evaluator API and its database connection.",
     {},
     async () => {
-      const res = await fetch(`${BASE_URL}/health`);
-      const data = await res.json();
+      const data = await apiFetch(`${BASE_URL}/health`);
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
     }
   );
